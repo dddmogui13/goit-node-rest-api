@@ -1,9 +1,11 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import dotenv from "dotenv";
 
 import contactsRouter from "./routes/contactsRouter.js";
 
+dotenv.config();
 const app = express();
 
 app.use(morgan("tiny"));
@@ -21,6 +23,4 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
-app.listen(3000, () => {
-  console.log("Server is running. Use our API on port: 3000");
-});
+export default app;
