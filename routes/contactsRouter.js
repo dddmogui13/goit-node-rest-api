@@ -7,20 +7,21 @@ import {
   updateContact,
   updateContactFavoriteOption,
 } from "../controllers/contactsControllers.js";
-import isIdValid from '../middlewares/isIdValid.js'
+import isIdValid from '../middlewares/isIdValid.js';
+import isTokenValid from "../middlewares/isTokenValid.js";
 
 const contactsRouter = express.Router();
 
-contactsRouter.get("/", getAllContacts);
+contactsRouter.get("/", isTokenValid, getAllContacts);
 
-contactsRouter.get("/:id", isIdValid, getContactById);
+contactsRouter.get("/:id", isTokenValid, isIdValid, getContactById);
 
-contactsRouter.delete("/:id", isIdValid, deleteContact);
+contactsRouter.delete("/:id", isTokenValid, isIdValid, deleteContact);
 
-contactsRouter.post("/", createContact);
+contactsRouter.post("/", isTokenValid, createContact);
 
-contactsRouter.put("/:id", isIdValid, updateContact);
+contactsRouter.put("/:id", isTokenValid, isIdValid, updateContact);
 
-contactsRouter.patch("/:id/favorite", isIdValid, updateContactFavoriteOption);
+contactsRouter.patch("/:id/favorite", isTokenValid, isIdValid, updateContactFavoriteOption);
 
 export default contactsRouter;
