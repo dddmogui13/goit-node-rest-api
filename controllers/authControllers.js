@@ -1,14 +1,20 @@
 import express from "express";
+import { promises as fs } from "fs";
+import path from "path";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import gravatar from "gravatar";
+import Jimp from "jimp";
 
 import { User } from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
 import { registerSchema } from "../schemas/userSchemas.js";
 
 dotenv.config();
+
 const { SECRET_KEY } = process.env;
+const avatarDir = path.resolve("public", "avatars");
 
 export const register = async (req, res, next) => {
   try {
@@ -25,7 +31,13 @@ export const register = async (req, res, next) => {
     }
 
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ ...req.body, password: hashPassword });
+    const avatarURL = gravatar.url(email);
+
+    const newUser = await User.create({
+      ...req.body,
+      password: hashPassword,
+      avatarURL,
+    });
 
     res.status(201).json({
       user: { email: newUser.email, subscription: newUser.subscription },
@@ -97,6 +109,35 @@ export const getCurrent = async (req, res, next) => {
     res.json({
       email,
       subscription,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAvatar = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+
+    if (!req.file) {
+      throw HttpError(400, "To change the avatar, please attach the file.");
+    }
+
+    const { path: tempUpload, originalname } = req.file;
+
+    const fileName = `${_id}_${originalname}`;
+    const resultUpload = path.resolve(avatarDir, fileName);
+
+    const avatar = await Jimp.read(tempUpload);
+    avatar.resize(250, 250).write(resultUpload);
+
+    await fs.unlink(tempUpload);
+
+    const avatarURL = path.join("avatars", fileName);
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.json({
+      avatarURL,
     });
   } catch (error) {
     next(error);
